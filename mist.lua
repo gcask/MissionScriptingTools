@@ -1542,25 +1542,29 @@ do -- the main scope
 				if mist.DBs.aliveUnits and mist.DBs.aliveUnits[val.object.id_] then
 					--log:info('object found in alive_units')
 					val.objectData = mist.utils.deepCopy(mist.DBs.aliveUnits[val.object.id_])
-					local pos = Object.getPosition(val.object)
-					if pos then
-						val.objectPos = pos.p
+					if Object.isExist(val.object) then 
+						local pos = Object.getPosition(val.object)
+						if pos then
+							val.objectPos = pos.p
+						end
+						val.objectType = mist.DBs.aliveUnits[val.object.id_].category
+						--[[if mist.DBs.activeHumans[Unit.getName(val.object)] then
+						--trigger.action.outText('remove via death: ' .. Unit.getName(val.object),20)
+							mist.DBs.activeHumans[Unit.getName(val.object)] = nil
+						end]]
+						valid = true
 					end
-					val.objectType = mist.DBs.aliveUnits[val.object.id_].category
-					--[[if mist.DBs.activeHumans[Unit.getName(val.object)] then
-					--trigger.action.outText('remove via death: ' .. Unit.getName(val.object),20)
-						mist.DBs.activeHumans[Unit.getName(val.object)] = nil
-					end]]
-					valid = true
 				elseif mist.DBs.removedAliveUnits and mist.DBs.removedAliveUnits[val.object.id_] then	-- it didn't exist in alive_units, check old_alive_units
 					--log:info('object found in old_alive_units')
 					val.objectData = mist.utils.deepCopy(mist.DBs.removedAliveUnits[val.object.id_])
-					local pos = Object.getPosition(val.object)
-					if pos then
-						val.objectPos = pos.p
+					if Object.isExist(val.object) then  
+						local pos = Object.getPosition(val.object)
+						if pos then
+							val.objectPos = pos.p
+						end
+						val.objectType = mist.DBs.removedAliveUnits[val.object.id_].category
+						valid = true
 					end
-					val.objectType = mist.DBs.removedAliveUnits[val.object.id_].category
-					valid = true
 				else	--attempt to determine if static object...
 					--log:info('object not found in alive units or old alive units')
 					if Object.isExist(val.object) then 
@@ -5226,7 +5230,7 @@ do -- mist.util scope
 
     function mist.utils.getHeadingPoints(point1, point2, north) -- sick of writing this out. 
         if north then 
-			local p1 = mist.utils.get3DDist(point1)
+			local p1 = mist.utils.makeVec3(point1)
             return mist.utils.getDir(mist.vec.sub(mist.utils.makeVec3(point2), p1), p1)
         else
             return mist.utils.getDir(mist.vec.sub(mist.utils.makeVec3(point2), mist.utils.makeVec3(point1))) 
@@ -8757,6 +8761,13 @@ do -- group tasks scope
 		mist.goRoute(gpData, useRoute)
 
 		return
+	end
+	
+	function mist.insertTaskToWP(wp, task)
+		if not wp.task then
+			wp.task = {["id"] = "ComboTask", ["params"] = {tasks = {}}}
+		end
+		table.insert(wp.task.params.tasks, task)
 	end
 
 	function mist.ground.patrol(gpData, pType, form, speed)
